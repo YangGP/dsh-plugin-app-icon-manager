@@ -41,7 +41,7 @@
     "dsh-icons": "./lib/cli.mjs"
   },
   "scripts": {
-    "check": "node --check lib/index.js && node --check lib/shortcut.js && node --check lib/ui.js && node --check lib/client.js && node --check lib/icon-file.js && node --check lib/cli.mjs",
+    "check": "node --check lib/index.js && node --check lib/shortcut.js && node --check lib/ui.js && node --check lib/client.js && node --check lib/icon-file.js && node --check lib/image-to-ico.js && node --check lib/cli.mjs",
     "test": "node test-client-bundle.mjs",
     "icons": "node lib/cli.mjs",
     "icons:list": "node lib/cli.mjs list",

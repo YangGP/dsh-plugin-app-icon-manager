@@ -1,10 +1,11 @@
 # 图标库目录
 
-把要用的图标文件直接放进本目录即可被插件识别：
+插件从这里读取可用图标：
 
 - 文件名（不含扩展名）就是图标名，插件通过它引用该图标
-- 推荐的 `.ico` 尺寸：16 / 32 / 48 / 256 多尺寸打包
-- ⚠️ 写入快捷方式时**只有 `.ico` 会被 Explorer 渲染**（`.png` 会被写入但不显示，见下）
+- ⚠️ 写入快捷方式时**只有 `.ico` 会被 Explorer 渲染**
+- **不必手工准备 `.ico`**：在设置页「上传图标」选一张 PNG/JPG，插件会自动转成
+  多尺寸 `.ico` 存进本目录
 
 ## 本目录内容
 
@@ -25,7 +26,8 @@ icons.resetToPrevious()      // 回到上一次用的图标
 
 ```powershell
 node lib/cli.mjs list                      # 看图标名
-node lib/cli.mjs set dsh-icon-v3           # 切换
+node lib/cli.mjs add logo.png my-icon      # 上传图片，转 .ico 入库
+node lib/cli.mjs set my-icon               # 切换
 ```
 
 ## 支持哪些格式

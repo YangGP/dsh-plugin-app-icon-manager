@@ -19,7 +19,9 @@ DeepSeek Harness 应用图标管理插件（v0.2.0）。
 
 **设置页**：重启 DSH 后刷新页面 → 设置 → 应用图标管理。
 
-- 图标库网格：点一下即切到所有 DSH 快捷方式（⚠️ 只支持 `.ico`）
+- **上传图标**：选择或拖入图片，自动转成多尺寸 `.ico` 入库；可勾选"上传并应用"一步到位
+  （支持 PNG / JPEG / GIF / BMP / WebP / TIFF，≤ 10 MB）
+- 图标库网格：点一下即切到所有 DSH 快捷方式
 - **重置回客户端图标**：写回 DSH 自带图标，随时可点
 - **重置回上次图标**：撤销最近一次切换（无历史时置灰）
 - **确认图标**：重新读盘刷新
@@ -28,12 +30,13 @@ DeepSeek Harness 应用图标管理插件（v0.2.0）。
 
 ```powershell
 cd <插件目录>
-node lib/cli.mjs list              # 图标库
-node lib/cli.mjs shortcuts         # 当前 / 最初 / 上次图标
-node lib/cli.mjs set <图标名>       # 切换（记录历史）
-node lib/cli.mjs reset-default     # 回客户端自带图标
-node lib/cli.mjs reset-previous    # 回上一次图标
-node lib/cli.mjs doctor            # 诊断
+node lib/cli.mjs list                 # 图标库
+node lib/cli.mjs shortcuts            # 当前 / 最初 / 上次图标
+node lib/cli.mjs add <图片> [名字]     # 上传图片，转 .ico 入库
+node lib/cli.mjs set <图标名>          # 切换（记录历史）
+node lib/cli.mjs reset-default        # 回客户端自带图标
+node lib/cli.mjs reset-previous       # 回上一次图标
+node lib/cli.mjs doctor               # 诊断
 ```
 
 非交互环境不会误改，脚本里加 `--yes` 跳过确认。
@@ -42,14 +45,24 @@ node lib/cli.mjs doctor            # 诊断
 
 ```js
 const icons = ctx.get('appIcons')
-icons.apply('dsh-icon-v3')     // 切换
+icons.upload({ data: base64, fileName: 'logo.png', name: 'my-icon' })  // 上传并转换
+icons.apply('my-icon')         // 切换
 icons.resetToDefault()         // 回客户端图标
 icons.resetToPrevious()        // 回上一次
 icons.discover()               // 快捷方式明细（spawn PowerShell，约 0.4s）
 ```
 
-> 图标库默认只有一个示例图标 `dsh-icon-v3`。把**你自己的** `.ico` 放进 `icons/` 目录，
-> 文件名（不含扩展名）就是它的图标名。
+> 图标库默认只有一个示例图标 `dsh-icon-v3`。上传的图片会自动转成多尺寸 `.ico` 存入
+> `icons/`，文件名（不含扩展名）就是它的图标名。手工放入的 `.ico` 同样被识别。
+
+### 为什么上传的图片要转换
+
+快捷方式的 `IconLocation` **只认 `.ico`**。COM 会毫无怨言地接受 `.png`，`Save()` 成功、
+回读校验也通过，但 Explorer 静默显示**空白图标**。所以上传一律先转成多尺寸
+`.ico`（16/24/32/48/64/128/256）再入库，非正方形图片居中补透明边而不是拉伸。
+
+转换用 **DSH 自带的 Python + Pillow**（实测 12.3.0 可用），通过环境变量 + 文件与宿主通信。
+若该运行时不存在，上传会返回明确的错误而不是写出一个坏图标。
 
 ## 三、配置
 
@@ -57,7 +70,7 @@ icons.discover()               // 快捷方式明细（spawn PowerShell，约 0.
 
 | 键 | 默认 | 说明 |
 | --- | --- | --- |
-| `libraryDir` | `icons` | 图标库目录（相对插件根目录），**只有 `.ico` 可用** |
+| `libraryDir` | `icons` | 图标库目录（相对插件根目录）。库里的 `.ico` 才可应用 |
 | `stableDir` | `.dsh\app-icons` | 图标写入前复制到此并保留原文件名（相对用户主目录）。**见下方警告** |
 | `dshExecutable` | `D:\Program Files\DSH\DeepSeek Harness.exe` | 判定快捷方式归属：`TargetPath` 须等于它 |
 | `defaultIcon` | *(空)* | 「重置回客户端图标」写入值；空 = `dshExecutable,0` |

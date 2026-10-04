@@ -34,6 +34,9 @@ const reactShim = {
   createElement,
   useState: (init) => [typeof init === 'function' ? init() : init, () => {}],
   useEffect: () => {},
+  // useRef 需要一个**可变**的 current：组件用它在 onChange/onClick 里读回 <input type="file">。
+  // 返回固定对象即可满足装载与首次渲染测试。
+  useRef: (init) => ({ current: init === undefined ? null : init }),
 };
 
 // ---------------------------------------------------------------------------
@@ -189,6 +192,59 @@ try {
   check(tree !== null && typeof tree === 'object', '首次渲染（加载中状态）返回元素树');
 } catch (error) {
   check(false, '渲染抛错: ' + error.message);
+}
+
+// 用真实字典渲染，确认上传区块所需的文案键都存在
+// （字典缺键时 t() 会回落成键名，界面会出现 "uploadPick" 这种原文，必须挡住）
+console.log('\n=== 上传区块的文案键 ===');
+let capturedDict = null;
+const dictionaryCtx = {
+  // effect 必须**真的执行**回调并返回其清理函数：locale.register 就包在 effect 里，
+  // 回调不跑就捕获不到词典（这里踩过一次）。
+  effect: (fn) => {
+    const dispose = fn();
+    return typeof dispose === 'function' ? dispose : () => {};
+  },
+  locale: {
+    register: (ns, dict) => {
+      capturedDict = dict;
+      return () => {};
+    },
+    bind: () => (key) => key,
+  },
+  slots: { inject: () => {}, register: () => {} },
+};
+try {
+  plugin.apply(dictionaryCtx);
+} catch (error) {
+  check(false, 'apply 抛错: ' + error.message);
+}
+
+const uploadKeys = [
+  'upload', 'uploadPick', 'uploadHint', 'uploadClear', 'uploadName', 'uploadNamePlaceholder',
+  'uploadWillConvert', 'uploadAddOnly', 'uploadAddOnlyHint', 'uploadAndApply',
+  'uploadAndApplyHint', 'uploadDone', 'uploadDoneApplied', 'uploadFail', 'uploadTooBig',
+  'uploadReadFail',
+];
+if (capturedDict === null) {
+  check(false, '未能捕获 locale.register 的词典');
+} else {
+  for (const lang of ['zh', 'en']) {
+    const dict = capturedDict[lang] ?? {};
+    const missing = uploadKeys.filter((key) => typeof dict[key] !== 'string' || dict[key] === '');
+    check(
+      missing.length === 0,
+      lang + ' 词典含全部上传文案' + (missing.length ? '，缺: ' + missing.join(', ') : ''),
+    );
+  }
+  // 两份词典键集合必须一致，否则某语言下会出现回落成键名的原文
+  const zhKeys = Object.keys(capturedDict.zh ?? {});
+  const enKeys = Object.keys(capturedDict.en ?? {});
+  const asymmetry = [
+    ...zhKeys.filter((key) => !enKeys.includes(key)),
+    ...enKeys.filter((key) => !zhKeys.includes(key)),
+  ];
+  check(asymmetry.length === 0, 'zh / en 词典键完全对称' + (asymmetry.length ? '，差异: ' + asymmetry.join(', ') : ''));
 }
 
 console.log('');

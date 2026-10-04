@@ -16,11 +16,13 @@ dsh-plugin-app-icon-manager/
 ├── icon.svg               # 插件卡片图标
 ├── locale/{en,zh}.json    # 卡片标题描述
 ├── lib/
-│   ├── index.js           # 宿主入口：发现 / 切换 / 重置 / 诊断
+│   ├── index.js           # 宿主入口：发现 / 切换 / 重置 / 上传 / 诊断
 │   ├── icon-file.js       # 图标可写性判定（扩展名 + 文件头魔数）
+│   ├── image-to-ico.js    # 上传的图片 → 多尺寸 .ico（调 Python/Pillow）
+│   ├── image-to-ico.py    # 转换脚本本体（须纯 ASCII）
 │   ├── ui.js              # HTTP 数据端点
 │   ├── client.js          # 设置页区块（React.createElement，无构建步骤）
-│   ├── cli.mjs            # 命令行入口
+│   ├── cli.mjs            # 命令行入口（list / add / set / reset-* / doctor）
 │   ├── shortcut.js        # 调 PowerShell COM 的封装
 │   └── shortcut.ps1       # .lnk 图标读写助手（纯 ASCII）
 ├── test-client-bundle.mjs # 设置页 bundle 的装载协议测试（npm test）
@@ -32,7 +34,7 @@ dsh-plugin-app-icon-manager/
 
 **`appIcons` 服务方法**：
 `libraryDir` `library` `resolve` `discover` `shortcuts` `state` `stateFile`
-`apply` `defaultIcon` `resetToDefault` `resetToPrevious` `describe`
+`upload` `apply` `defaultIcon` `resetToDefault` `resetToPrevious` `describe`
 
 `describe()` 与 `discover()` 的分工见第九节「插件激活期不能 spawn 子进程」。
 
@@ -44,11 +46,16 @@ dsh-plugin-app-icon-manager/
 | --- | --- |
 | `GET  /dsh-app-icon-manager/state` | 图标库 + 快捷方式 + `historyDepth` / `previous` |
 | `GET  /dsh-app-icon-manager/icon?name=` | 图标文件本体（预览） |
+| `POST /dsh-app-icon-manager/upload` | 上传图片 → 转 `.ico` 入库 |
 | `POST /dsh-app-icon-manager/apply` | 切换，体 `{ "name": "<图标名>" }` |
 | `POST /dsh-app-icon-manager/reset-default` | 回客户端自带图标 |
 | `POST /dsh-app-icon-manager/reset-previous` | 回上一次图标 |
 
-- `icon` 只接受图标库内的名字（`?name=../../../package.json` 返回 404）；请求体超 64 KiB 断开
+- `icon` 只接受图标库内的名字（`?name=../../../package.json` 返回 404）
+- 普通请求体超 64 KiB 断开；`upload` 单独放宽到 16 MiB（base64 膨胀 4/3），
+  宿主侧再按**解码后**的真实字节数检查 10 MB 上限
+- `upload` 体：`{ data: <base64 或 data URL>, fileName?, name?, overwrite?, apply? }`；
+  `apply: true` 时入库后立即切换，响应带 `applied: boolean`
 - 设置页**界面本体**不在这些端点里：由 DSH 框架供给到 `/plugins/dsh-plugin-app-icon-manager/client.js`
 - `reset-previous` 的返回带 `skipped: { path, current, original }[]`，列出无可回退历史而未改动的项
 
@@ -61,9 +68,12 @@ dsh-plugin-app-icon-manager/
 2. 资源注册放在 `apply()` 内；服务依赖用 `ctx.inject([...])`，**不要**用同步 `ctx.get`（原因见第九节）。
 3. `ctx.set()` 只能覆盖同一 fiber 已注册的服务；初次注册必须用 `ctx.provide()`。
 4. `.ps1` 含中文注释时必须是 **UTF-8 带 BOM**；纯 ASCII 则无要求。改过带 BOM 的 `.ps1` 后要补回 BOM
-   （见第八节）。`.cmd` 保持纯 ASCII。
+   （见第八节）。`.cmd` 与 `image-to-ico.py` 保持纯 ASCII。
 5. **不要用 PowerShell 改本项目含中文的 UTF-8 文件**（会被按 ANSI 读入再写回，整份乱码，见第七节）。
 6. 设置页改 `lib/client.js` 后刷新页面即生效；宿主侧（`index.js` / `ui.js`）需重启 DSH。
+7. **上传的图片必须先转 `.ico` 再入库**——`IconLocation` 只认 `.ico`，直接放 PNG 会显示空白图标
+   （见第四节成因 1）。转换能力来自 DSH 自带的 Python + Pillow，走环境变量 + 文件通信，
+   与 `shortcut.js` 同一个理由（管道在沙箱下 `EPERM`）。
 
 ---
 
