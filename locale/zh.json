@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "应用图标管理",
+    "description": "管理 DeepSeek Harness 应用自身的图标（快捷方式 / 任务栏 / 托盘），内置图标库，支持切换与还原。"
+  }
+}

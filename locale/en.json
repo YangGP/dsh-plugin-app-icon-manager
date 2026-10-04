@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "App Icon Manager",
+    "description": "Manage the DeepSeek Harness application's own icons (shortcut, taskbar, tray) with an icon library that supports switching and restoring."
+  }
+}

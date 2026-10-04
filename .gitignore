@@ -1,0 +1,19 @@
+# 运行时数据：记录原始图标与历史栈，含**本机绝对路径**，绝不能提交
+.state/
+
+# 开发期备份（package.json / pnpm 配置的历史副本）
+.backup/
+
+# 依赖与构建产物
+node_modules/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+*.swp
+*~

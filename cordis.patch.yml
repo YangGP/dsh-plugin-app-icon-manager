@@ -1,0 +1,39 @@
+# ============================================================================
+# dsh-plugin-app-icon-manager —— DSH bundle patch（挂载声明）
+# ============================================================================
+# DSH 启动时按 bundle 层栈叠加各插件的 patch，本文件把图标管理器插入
+# profile 的配置树。`name` 必须是本包的包名，`id` 在配置树内唯一。
+#
+# 本地开发安装：路径不能含空格（见 README 第三节），因此经由无空格的链接目录：
+#   dsh plugin --profile desktop add "link:%USERPROFILE%\.dsh\plugins\app-icon-manager"
+#
+# 卸载：
+#   dsh plugin --profile desktop remove dsh-plugin-app-icon-manager
+#
+# 注意：安装/更新后需要重启 DSH 才会加载新的 JS 模块。
+# ============================================================================
+
+- insert:
+    - id: app-icon-manager
+      name: dsh-plugin-app-icon-manager
+      config:
+        # 图标库目录（相对本插件根目录）
+        # ⚠️ 目录里可以放 .ico/.png/.jpg/.webp，但**只有 .ico 能被 Explorer 渲染**：
+        #    COM 会接受 .png 并让回读校验通过，却显示成空白图标。插件现在会拦截非 .ico。
+        libraryDir: icons
+        # 启动时是否自动应用图标。本版本不实现自动改写，开启只会打一条日志
+        applyOnStart: false
+        # 判定「哪些快捷方式属于 DSH」的依据：TargetPath 必须等于此启动器路径
+        dshExecutable: 'D:\Program Files\DSH\DeepSeek Harness.exe'
+        # 图标写入 IconLocation 前复制到这里（相对用户主目录解析），并**保留原文件名**。
+        #
+        # ⚠️ 不要设为空。实测：直接引用图标库里的文件（插件目录在工作区内）会让快捷方式
+        # 显示为**空白图标**。必须复制到一个已验证可用的目录再引用。
+        # 用户主目录不含空格，且该路径下的图标已验证显示正常。
+        stableDir: '.dsh\app-icons'
+        # 「重置回客户端图标」写入的默认图标。留空表示取 dshExecutable 的索引 0，
+        # 即 DSH 启动器自带的图标——这也是「默认的样子」最自然的解释。
+        defaultIcon: ''
+        # 是否注册设置页区块（无 webServer 服务时自动跳过）。
+        # 界面位置：设置 → 应用图标管理
+        ui: true

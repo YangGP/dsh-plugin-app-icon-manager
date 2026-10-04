@@ -1,0 +1,79 @@
+{
+  "name": "dsh-plugin-app-icon-manager",
+  "version": "0.2.0",
+  "description": "DSH plugin: manage the Windows shortcut icons of DeepSeek Harness (desktop / Start Menu / taskbar) — switch from a bundled icon library, undo, and reset. 管理 DSH 快捷方式图标（桌面/开始菜单/任务栏），带切换历史与一键重置。",
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "icon",
+    "shortcut",
+    "lnk",
+    "windows",
+    "taskbar",
+    "start-menu",
+    "desktop"
+  ],
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "lib",
+    "icons",
+    "diagnostic",
+    "locale",
+    "cordis.patch.yml",
+    "icon.svg",
+    "fix-icon.cmd",
+    "fix-icon.ps1",
+    "test-client-bundle.mjs",
+    "README.md",
+    "INVESTIGATION.md",
+    "LICENSE"
+  ],
+  "icon": "./icon.svg",
+  "bin": {
+    "dsh-icons": "./lib/cli.mjs"
+  },
+  "scripts": {
+    "check": "node --check lib/index.js && node --check lib/shortcut.js && node --check lib/ui.js && node --check lib/client.js && node --check lib/icon-file.js && node --check lib/cli.mjs",
+    "test": "node test-client-bundle.mjs",
+    "icons": "node lib/cli.mjs",
+    "icons:list": "node lib/cli.mjs list",
+    "icons:status": "node lib/cli.mjs shortcuts",
+    "icons:doctor": "node lib/cli.mjs doctor"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "os": [
+    "win32"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/YangGP/dsh-plugin-app-icon-manager.git"
+  },
+  "homepage": "https://github.com/YangGP/dsh-plugin-app-icon-manager#readme",
+  "bugs": {
+    "url": "https://github.com/YangGP/dsh-plugin-app-icon-manager/issues"
+  },
+  "author": "YangGP",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-settings"
+      ],
+      "platform": "web"
+    }
+  },
+  "license": "MIT"
+}
